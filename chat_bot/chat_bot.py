@@ -47,9 +47,9 @@ async def get_latest_news(url_last, url_first):
     collection_name = "news_collection"
     collection = db[collection_name]
     if url_last and url_first:
-       result = collection.find({'link': url_first}).sort([('_id', pymongo.DESCENDING)]).limit(10)
+       result = collection.find({'link': url_first}).limit(10)
     else:
-       result = collection.find({'date': '2024-01-19'}).limit(10)
+       result = collection.find({'date': '2024-01-20'}).limit(10)
     #result = collection.find({'date': '2024-01-19'}).limit(10)
     return result
 
@@ -182,6 +182,8 @@ async def get_news(message: types.Message):
         persons = list(set(persons))
         places = list(set(places))
         outTon = await get_tone(news_item['text'])
+        summ = await summarise(news_item['text'])
+        rew = await rewriter(news_item['text'])
         await bot.send_message(message.chat.id, news_text[:4090], parse_mode=types.ParseMode.HTML)
         if (places):
            text_places = '\n'.join(map(lambda x: "Достопримечательность: " + x, places))
@@ -191,12 +193,14 @@ async def get_news(message: types.Message):
         if (persons):
            text_persons = '\n'.join(map(lambda x: "VIP персона: " + x, persons))
            await bot.send_message(message.chat.id, text_persons, parse_mode=types.ParseMode.HTML)
+           await bot.send_message(message.chat.id, outTon, parse_mode=types.ParseMode.HTML)
         else:
            await bot.send_message(message.chat.id, "Нет упоминания персон", parse_mode=types.ParseMode.HTML)
-        await bot.send_message(message.chat.id, outTon, parse_mode=types.ParseMode.HTML)
+        await bot.send_message(message.chat.id, "Аннотация: " + summ, parse_mode=types.ParseMode.HTML)
+        await bot.send_message(message.chat.id, "Пересказ: " + rew, parse_mode=types.ParseMode.HTML)
     # Кнопка "Загрузить еще 10 новостей"
     keyboard = InlineKeyboardMarkup(row_width=1)
-    button = InlineKeyboardButton("Загрузить еще 10 новостей", callback_data='load_more')
+    button = InlineKeyboardButton("Загрузить последние новости", callback_data='load_more')
     keyboard.add(button)
     await bot.send_message(message.chat.id, "Выберите действие:", reply_markup=keyboard)
 
@@ -363,6 +367,8 @@ async def load_more_news(callback_query: types.CallbackQuery):
         persons, places = await parse.parse(news_text)
         persons = list(set(persons))
         places = list(set(places))
+        summ = await summarise(news_item['text'])
+        rew = await rewriter(news_item['text'])
         outTon = await get_tone(news_item['text'])
         await bot.send_message(callback_query.from_user.id, news_text[:4090], parse_mode=types.ParseMode.HTML)
         if (places):
@@ -373,9 +379,12 @@ async def load_more_news(callback_query: types.CallbackQuery):
         if (persons):
            text_persons = '\n'.join(map(lambda x: "VIP персона: " + x, persons))
            await bot.send_message(callback_query.from_user.id, text_persons, parse_mode=types.ParseMode.HTML)
+           await bot.send_message(callback_query.from_user.id, outTon, parse_mode=types.ParseMode.HTML)
         else:
            await bot.send_message(callback_query.from_user.id, "Нет упоминания персон", parse_mode=types.ParseMode.HTML) 
-        await bot.send_message(callback_query.from_user.id, outTon, parse_mode=types.ParseMode.HTML)       
+        #await bot.send_message(callback_query.from_user.id, outTon, parse_mode=types.ParseMode.HTML)
+        await bot.send_message(callback_query.from_user.id, "Аннотация: " + summ, parse_mode=types.ParseMode.HTML)
+        await bot.send_message(callback_query.from_user.id, "Пересказ: " + rew, parse_mode=types.ParseMode.HTML)       
 #await bot.send_message(callback_query.from_user.id, news_text, parse_mode=types.ParseMode.HTML)
      
     # Кнопка "Загрузить еще 10 новостей"
