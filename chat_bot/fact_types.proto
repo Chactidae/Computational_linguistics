@@ -1,0 +1,13 @@
+import "base.proto";
+import "facttypes_base.proto";  
+
+//message vip : TAuxDicArticle {}
+
+message Vip: NFactType.TFact
+{
+    required string Person = 1;
+}
+message Mark: NFactType.TFact
+{
+    required string Place = 1;
+}
